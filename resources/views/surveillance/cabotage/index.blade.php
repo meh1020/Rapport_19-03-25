@@ -4,10 +4,16 @@
 
 @section('content')
 <div class="container-fluid px-4">
-    <div class="top-menu mb-4 d-flex gap-2">
+    <div class="top-menu mb-4 d-flex gap-2 align-items-center">
         <button class="btn btn-success">
             <a class="text-decoration-none text-white" href="{{ route('cabotage.create') }}">Créer CABOTAGE</a>
         </button>
+        <!-- Formulaire d'import CSV directement intégré -->
+        <form action="{{ route('cabotage.importCSV') }}" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+            @csrf
+            <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv">
+            <button type="submit" class="btn btn-primary">Importer CSV</button>
+        </form>
     </div>
 
     <h2 class="mb-4 text-center">⚓ Liste des Cabotages</h2>
@@ -18,11 +24,16 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="table-responsive">
         <table class="table table-bordered table-hover table-striped">
             <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
                     <th>Date</th>
                     <th>Provenance</th>
                     <th>Navires</th>
@@ -34,7 +45,6 @@
             <tbody>
                 @forelse ($cabotages as $cabotage)
                     <tr>
-                        <td><small>{{ $cabotage->id }}</small></td>
                         <td><small>{{ $cabotage->date }}</small></td>
                         <td><small>{{ $cabotage->provenance }}</small></td>
                         <td><small>{{ $cabotage->navires }}</small></td>
@@ -72,16 +82,13 @@
         border-radius: 5px; /* Arrondi des bords du tableau à 5px */
         overflow: hidden; /* Conserve l'arrondi des coins */
     }
-
     .table thead {
         border-top-left-radius: 5px;
         border-top-right-radius: 5px;
     }
-
     .table tbody {
         border-bottom-left-radius: 5px;
         border-bottom-right-radius: 5px;
     }
-
 </style>
 @endsection

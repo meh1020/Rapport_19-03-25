@@ -54,4 +54,68 @@ class CabotageController extends Controller
             return redirect()->route('cabotage.index')->with('success', 'Enregistrement supprimé avec succès.');
         }
 
+        public function importCSV(Request $request)
+{
+    // Validation du fichier
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt'
+    ]);
+
+    $file = $request->file('csv_file');
+    $handle = fopen($file->getRealPath(), 'r');
+
+    if ($handle === false) {
+        return redirect()->route('cabotage.index')->with('error', 'Impossible d\'ouvrir le fichier CSV.');
+    }
+
+    // Lire la première ligne pour récupérer les en-têtes (séparateur point-virgule)
+    $header = fgetcsv($handle, 1000, ';');
+    if (!$header) {
+        return redirect()->route('cabotage.index')->with('error', 'Le fichier CSV est vide ou invalide.');
+    }
+
+    // Mise en forme des en-têtes : conversion en minuscules et suppression des espaces
+    $header = array_map(function($value) {
+        return strtolower(trim($value));
+    }, $header);
+
+    // Si le fichier contient une colonne "id" en première position, on l'ignore
+    if (($key = array_search('id', $header)) !== false) {
+        unset($header[$key]);
+        $header = array_values($header); // Réindexer le tableau
+    }
+
+    // Vérification que le CSV contient bien toutes les colonnes attendues
+    $expected = ['date', 'provenance', 'navires', 'equipage', 'passagers'];
+    foreach ($expected as $col) {
+        if (!in_array($col, $header)) {
+            fclose($handle);
+            return redirect()->route('cabotage.index')
+                ->with('error', "Le fichier CSV doit contenir la colonne '$col'.");
+        }
+    }
+
+    // Parcours de chaque ligne du CSV et insertion en base
+    while (($row = fgetcsv($handle, 1000, ';')) !== false) {
+        // S'assurer que la ligne a le même nombre de colonnes que l'en-tête
+        if (count($row) == count($header)) {
+            $data = array_combine($header, $row);
+            // Créer un nouvel enregistrement avec les données importées
+            Cabotage::create([
+                'date'       => $data['date'],
+                'provenance' => $data['provenance'],
+                'navires'    => $data['navires'],
+                'equipage'   => (int)$data['equipage'],
+                'passagers'  => (int)$data['passagers'],
+            ]);
+        }
+    }
+
+    fclose($handle);
+
+    return redirect()->route('cabotage.index')->with('success', 'CSV importé avec succès !');
+}
+
+        
+
 }

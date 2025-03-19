@@ -87,6 +87,7 @@ Route::get('/rapport/pdf', [RapportController::class, 'exportPdf'])->name('rappo
 use App\Http\Controllers\CabotageController;
 Route::resource('cabotage', CabotageController::class);
 Route::post('/cabotage/store', [CabotageController::class, 'store'])->name('cabotage.store');
+Route::post('/cabotage/import', [CabotageController::class, 'importCSV'])->name('cabotage.importCSV');
 
 //mer territorial
 Route::resource('mer_territorial', MerTerritorial::class);
